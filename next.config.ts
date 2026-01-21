@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: '/api/mapillary/:path*',
+        destination: 'https://mapillary-extensions.vercel.app/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
