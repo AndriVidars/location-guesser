@@ -1,0 +1,195 @@
+'use server'
+
+import { supabaseServer } from "../supabase";
+import type { Game, GamePlayer, GameRound } from "../types/game";
+import { generateInviteCode } from "../utils/game";
+import { getRandomCity } from "./geo";
+import { getNearestImageId } from "./mapillary";
+
+export async function createGame(
+    playerName: string,
+    numRounds: number,
+    timeLimit: number,
+    continentCode: string | null,
+    countryCode: string | null
+): Promise<{ game: Game; player: GamePlayer } | null> {
+    const inviteCode = generateInviteCode();
+    const { data: gameData, error } = await supabaseServer.from('games').insert({
+        invite_code: inviteCode,
+        num_rounds: numRounds,
+        time_limit: timeLimit,
+        continent_code: continentCode,
+        country_code: countryCode
+    }).select().single();
+
+    if (error) {
+        console.error('Error creating game:', error);
+        return null;
+    }
+
+    const { data: playerData, error: playerError } = await supabaseServer.from('game_players').insert({
+        game_id: gameData.id,
+        player_id: crypto.randomUUID(),
+        name: playerName,
+        is_host: true
+    }).select().single();
+
+    if (playerError) {
+        console.error('Error creating game player:', playerError);
+        return null;
+    }
+
+    return { game: gameData, player: playerData };
+}
+
+export async function joinGame(
+    inviteCode: string,
+    playerName: string
+): Promise<{ game: Game; player: GamePlayer } | null> {
+    const { data: gameData, error: gameError } = await supabaseServer
+        .from('games')
+        .select('*')
+        .eq('invite_code', inviteCode.toUpperCase())
+        .eq('is_active', true)
+        .single();
+
+    if (gameError || !gameData) {
+        console.error('Error finding game or game not found:', gameError);
+        return null;
+    }
+
+    const { data: playerData, error: playerError } = await supabaseServer
+        .from('game_players')
+        .insert({
+            game_id: gameData.id,
+            player_id: crypto.randomUUID(),
+            name: playerName,
+            is_host: false
+        })
+        .select()
+        .single();
+
+    if (playerError) {
+        console.error('Error joining game:', playerError);
+        return null;
+    }
+
+    return { game: gameData, player: playerData };
+}
+
+export async function startGame(
+    gameId: string,
+    playerId: string
+): Promise<GameRound | null> {
+    const { data: game, error } = await supabaseServer
+        .from('games')
+        .select('current_round')
+        .eq('id', gameId)
+        .single();
+
+    if (error || !game) {
+        console.error('Error starting game:', error);
+        return null;
+    }
+
+    if (game.current_round !== 0) {
+        console.error('Game has already started');
+        return null;
+    }
+
+    return nextRound(gameId, playerId);
+}
+
+export async function nextRound(
+    gameId: string,
+    playerId: string
+): Promise<GameRound | null> {
+    // 1. Verify that the player is the host of the game
+    const { data: player, error: playerError } = await supabaseServer
+        .from('game_players')
+        .select('is_host')
+        .eq('game_id', gameId)
+        .eq('player_id', playerId)
+        .single();
+
+    if (playerError || !player?.is_host) {
+        console.error('Unauthorized: Only the host can start the next round');
+        return null;
+    }
+
+    // 2. Get game details to know constraints and current state
+    const { data: game, error: gameError } = await supabaseServer
+        .from('games')
+        .select('*')
+        .eq('id', gameId)
+        .single();
+
+    if (gameError || !game) {
+        console.error('Error fetching game details:', gameError);
+        return null;
+    }
+
+    if (game.current_round >= game.num_rounds) {
+        console.error('Game has already reached the maximum number of rounds');
+        return null;
+    }
+
+    // 3. Find a city with Mapillary coverage
+    let cityData = null;
+    let imageId = null;
+
+    while (!imageId) {
+        cityData = await getRandomCity(game.continent_code, game.country_code);
+        if (cityData) {
+            imageId = await getNearestImageId(cityData.latitude, cityData.longitude);
+        }
+    }
+
+    if (!cityData || !imageId) {
+        console.error('Failed to find a suitable location with Mapillary imagery');
+        return null;
+    }
+
+    // 4. Create the new round and update the game's current_round
+    const nextRoundNumber = game.current_round + 1;
+
+    // We deactivate the previous round for this game
+    if (game.current_round > 0) {
+        await supabaseServer
+            .from('game_rounds')
+            .update({ is_active: false })
+            .eq('game_id', gameId)
+            .eq('round_number', game.current_round);
+    }
+
+    const { data: roundData, error: roundError } = await supabaseServer
+        .from('game_rounds')
+        .insert({
+            game_id: gameId,
+            round_number: nextRoundNumber,
+            city_name: cityData.city_name,
+            sampled_latitude: cityData.latitude,
+            sampled_longitude: cityData.longitude,
+            mapillary_image_id: imageId,
+            is_active: true
+        })
+        .select()
+        .single();
+
+    if (roundError) {
+        console.error('Error creating new round:', roundError);
+        return null;
+    }
+
+    // 5. Update the game state (this triggers the update for other players)
+    const { error: updateError } = await supabaseServer
+        .from('games')
+        .update({ current_round: nextRoundNumber })
+        .eq('id', gameId);
+
+    if (updateError) {
+        console.error('Error updating game state:', updateError);
+    }
+
+    return roundData;
+}

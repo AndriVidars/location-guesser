@@ -1,80 +1,87 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import StreetView from "@/app/core/maps/streetview";
-import GuessMap from "@/app/core/maps/map";
-import { getRandomCity } from '@/lib/game-server';
-import { getNearestImageId } from './core/maps/mapillary';
-
-interface GameSession {
-  imageId: string;
-  city: string;
-  country: string;
-  lat: number;
-  lng: number;
-}
+import { useRouter } from 'next/navigation';
+import { createGame, joinGame } from '@/lib/server/game';
+import { getContinents, getCountries } from '@/lib/server/geo';
+import type { ContinentData, CountryData } from '@/lib/types/geo';
+import { MainMenu } from '@/components/home/MainMenu';
+import { CreateGameForm } from '@/components/home/CreateGameForm';
+import { JoinGameForm } from '@/components/home/JoinGameForm';
 
 export default function Home() {
-  const [isReady, setIsReady] = useState(false);
-  const [gameSession, setGameSession] = useState<GameSession | null>(null);
+  const router = useRouter();
+  const [view, setView] = useState<'main' | 'create' | 'join'>('main');
+  const [loading, setLoading] = useState(false);
+
+  // Form states
+  const [name, setName] = useState('');
+  const [rounds, setRounds] = useState(5);
+  const [time, setTime] = useState(60);
+  const [region, setRegion] = useState<'world' | 'continent' | 'country'>('world');
+  const [regionId, setRegionId] = useState('');
+  const [code, setCode] = useState('');
+
+  // Metadata
+  const [continents, setContinents] = useState<ContinentData[]>([]);
+  const [countries, setCountries] = useState<CountryData[]>([]);
 
   useEffect(() => {
-    async function fetchInitialLocation() {
-      let foundImage = false;
-      while (!foundImage) {
-        const city = await getRandomCity();
-        if (city) {
-          const id = await getNearestImageId(city.latitude, city.longitude);
-          if (id) {
-            setGameSession({
-              imageId: id,
-              lat: city.latitude,
-              lng: city.longitude,
-              city: city.city_name,
-              country: city.country_name
-            });
-            foundImage = true;
-          }
-        }
-      }
-    }
-
-    fetchInitialLocation();
+    Promise.all([getContinents(), getCountries()]).then(([conts, counts]) => {
+      setContinents(conts);
+      setCountries(counts);
+    });
   }, []);
 
-  const showLoading = !gameSession || !isReady;
+  const handleAction = async () => {
+    if (!name) return;
+    setLoading(true);
+    try {
+      const res = view === 'create'
+        ? await createGame(name, rounds, time, region === 'continent' ? regionId : null, region === 'country' ? regionId : null)
+        : await joinGame(code, name);
+
+      if (res) {
+        localStorage.setItem('game_player', JSON.stringify(res.player));
+        router.push(`/game/${res.game.id}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="relative flex h-screen w-full flex-col items-center justify-center bg-[#f9f9f7] font-sans overflow-hidden dark:bg-zinc-950">
-      {showLoading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#f9f9f7] dark:bg-zinc-950 transition-opacity duration-500">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 border-2 border-zinc-200 border-t-zinc-800 rounded-full animate-spin dark:border-zinc-800 dark:border-t-zinc-200" />
-            <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-bold">
-              Loading
-            </p>
-          </div>
+    <div className="flex flex-col items-center justify-center min-h-screen text-xs uppercase tracking-wider">
+      <div className="w-64 space-y-12">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">🌍</span>
+          <h1 className="font-bold text-lg">Location Guesser</h1>
         </div>
-      )}
 
-      {gameSession && (
-        <div className={`transition-all duration-1000 ${isReady ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'}`}>
-          <div className="relative h-[85vh] w-[90vw] max-w-7xl overflow-hidden rounded-2xl border border-zinc-200/60 bg-white p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <StreetView
-              imageId={gameSession.imageId}
-              onLoad={() => setIsReady(true)}
-            />
-          </div>
+        {view === 'main' && <MainMenu onSelect={setView} />}
 
-          <div className="absolute bottom-10 right-10 z-20 group flex flex-col items-end gap-3">
-            <div className="h-40 w-52 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:h-[400px] group-hover:w-[600px] dark:border-zinc-800 dark:bg-zinc-900">
-              {isReady && (
-                <GuessMap />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+        {view === 'create' && (
+          <CreateGameForm
+            name={name} setName={setName}
+            rounds={rounds} setRounds={setRounds}
+            time={time} setTime={setTime}
+            region={region} setRegion={setRegion}
+            regionId={regionId} setRegionId={setRegionId}
+            continents={continents} countries={countries}
+            onSubmit={handleAction} onCancel={() => setView('main')}
+            loading={loading}
+          />
+        )}
+
+        {view === 'join' && (
+          <JoinGameForm
+            name={name} setName={setName}
+            code={code} setCode={setCode}
+            onSubmit={handleAction} onCancel={() => setView('main')}
+            loading={loading}
+          />
+        )}
+      </div>
     </div>
   );
 }
