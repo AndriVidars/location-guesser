@@ -1,3 +1,4 @@
+import pyproj
 import mapillary.interface as mly
 from geonamescache import GeonamesCache
 from collections import defaultdict
@@ -10,26 +11,38 @@ load_dotenv('../.env.local')
 TOKEN = os.getenv("NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN")
 mly.set_access_token(TOKEN)
 
+
 def main():
     gc = GeonamesCache()
-    continents = gc.get_continents()
+    
+    continents_list = [
+        {"code": "AF", "name": "Africa", "area_km2": 30_200_000}, 
+        {"code": "AS", "name": "Asia", "area_km2": 44_579_000}, 
+        {"code": "EU", "name": "Europe", "area_km2": 10_180_000}, 
+        {"code": "NA", "name": "North America", "area_km2": 24_240_000}, 
+        {"code": "OC", "name": "Oceania", "area_km2": 8_910_000}, 
+        {"code": "SA", "name": "South America", "area_km2": 17_840_000}, 
+        {"code": "AN", "name": "Antarctica", "area_km2": 14_000_000}
+    ]
+
+    with open('continents.json', 'w', encoding='utf-8') as f:
+        json.dump(continents_list, f, ensure_ascii=False)
+    
     countries = gc.get_countries()
+    countries_list = [
+        {
+            "code": k, 
+            "name": v['name'], 
+            "continent_code": v['continentcode'], 
+            "area_km2": v['areakm2']
+        } 
+        for k, v in countries.items()
+    ]
+
+    with open('countries.json', 'w', encoding='utf-8') as f:
+        json.dump(countries_list, f, ensure_ascii=False)
+
     cities = gc.get_cities()
-
-    continent_name_dict = {k: v['asciiName'] for k, v in continents.items()}
-    country_name_dict = {k: v['name'] for k, v in countries.items()}
-    with open('continent_name_dict.json', 'w', encoding='utf-8') as f:
-        json.dump(continent_name_dict, f, ensure_ascii=False)
-    with open('country_name_dict.json', 'w', encoding='utf-8') as f:
-        json.dump(country_name_dict, f, ensure_ascii=False)
-    
-    countries_by_continent = defaultdict(list)
-    for k, v in countries.items():
-        countries_by_continent[v['continentcode']].append(k)
-    with open('countries_by_continent.json', 'w', encoding='utf-8') as f:
-        json.dump(countries_by_continent, f, ensure_ascii=False)
-    
-
     cities_by_country = defaultdict(list)
     for city_id, city_data in cities.items():
         country_code = city_data['countrycode']
@@ -38,7 +51,7 @@ def main():
     sorted_country_codes = sorted(cities_by_country.keys(), key=lambda c: countries.get(c, {}).get('name', c))
     
     # only export cities with coverage
-    out = defaultdict(dict) # country -> {city -> {lat, lon, pop}}}
+    cities_with_coverage = []
     for country_code in tqdm(sorted_country_codes, desc="Processing countries"):
         country_cities = cities_by_country[country_code]
         country_cities.sort(key=lambda x: x['population'], reverse=True)
@@ -55,7 +68,13 @@ def main():
                 if data:
                     features = data.to_dict().get('features', [])
                     if features:
-                        out[country_code][city_name] = {"lat": lat, "lon": lon, "pop": pop}
+                        cities_with_coverage.append({
+                            "name": city_name,
+                            "country_code": country_code,
+                            "lat": lat, 
+                            "lon": lon, 
+                            "pop": pop
+                        })
                     
                     print(f"City: {city_name}, Population: {pop}, Coverage: {'✅' if features else '❌'}")
                                 
@@ -63,8 +82,8 @@ def main():
                 print(f"Error fetching image for city {city_name}: {e}")
                 continue
     
-    with open('mapillary_city_coverage.json', 'w', encoding='utf-8') as f:
-        json.dump(out, f, ensure_ascii=False)
+    with open('cities.json', 'w', encoding='utf-8') as f:
+        json.dump(cities_with_coverage, f, ensure_ascii=False)
     
 if __name__ == "__main__":
     main()

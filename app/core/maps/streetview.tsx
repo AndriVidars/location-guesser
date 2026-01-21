@@ -2,20 +2,19 @@
 
 import { useEffect, useRef } from 'react';
 import { Viewer, ViewerOptions } from 'mapillary-js';
-import { getNearestImageId } from './mapillary';
 
 interface StreetViewProps {
-  lat: number;
-  lng: number;
+  imageId: string;
+  onLoad?: () => void;
 }
 
-export default function StreetView({ lat, lng }: StreetViewProps) {
+export default function StreetView({ imageId, onLoad }: StreetViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) {
+    if (!container || !imageId) {
       return;
     }
 
@@ -23,17 +22,12 @@ export default function StreetView({ lat, lng }: StreetViewProps) {
 
     async function initViewer() {
       try {
-        const imageId = await getNearestImageId(lat, lng);
-
         if (!mounted) {
-          return;
-        }
-        if (!imageId) {
           return;
         }
 
         if (viewerRef.current) {
-          viewerRef.current.moveTo(imageId).catch((err) => { return; });
+          viewerRef.current.moveTo(imageId).catch(() => { return; });
           return;
         }
 
@@ -41,11 +35,19 @@ export default function StreetView({ lat, lng }: StreetViewProps) {
           accessToken: process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN || '',
           container: container as HTMLElement,
           imageId: imageId,
-          component: { cover: false },
+          component: {
+            cover: false,
+            attribution: false
+          },
         };
 
         const viewer = new Viewer(options);
         viewerRef.current = viewer;
+
+        // Notify once the viewer is initialized
+        if (onLoad) {
+          onLoad();
+        }
       } catch (e) {
         return;
       }
@@ -60,7 +62,16 @@ export default function StreetView({ lat, lng }: StreetViewProps) {
         viewerRef.current = null;
       }
     };
-  }, [lat, lng]);
+  }, [imageId]);
 
-  return <div ref={containerRef} style={{ width: '400px', height: '300px' }} />;
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      <div className="absolute bottom-4 left-4 z-10 select-none pointer-events-none opacity-40 hover:opacity-100 transition-opacity">
+        <span className="text-[10px] text-white drop-shadow-md font-sans tracking-wide">
+          © Mapillary
+        </span>
+      </div>
+    </div>
+  );
 }

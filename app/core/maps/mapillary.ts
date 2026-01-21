@@ -13,9 +13,10 @@ export async function getNearestImageId(lat: number, lng: number): Promise<strin
         if (data && data.id) {
             return data.id;
         }
-
         return null;
+
     } catch (error) {
+
         return null;
     }
 }

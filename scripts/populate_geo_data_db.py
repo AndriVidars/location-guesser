@@ -11,25 +11,19 @@ key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") # Use service role for inserts
 
 supabase = create_client(url, key)
 
-with open('country_name_dict.json', 'r', encoding='utf-8') as f:
-    country_name_dict = json.load(f)
+with open('continents.json', 'r', encoding='utf-8') as f:
+    continents = json.load(f)
+    for continent in tqdm(continents, desc="Inserting continents"):
+        supabase.table('continents').insert({"code": continent['code'], "name": continent['name'], "area_km2": continent['area_km2']}).execute()
 
-with open('continent_name_dict.json', 'r', encoding='utf-8') as f:
-    continent_name_dict = json.load(f)
-    for code, name in tqdm(continent_name_dict.items(), desc="Inserting continents"):
-        supabase.table('continents').insert({"code": code, "name": name}).execute()
+with open('countries.json', 'r', encoding='utf-8') as f:
+    countries = json.load(f)
+    for country in tqdm(countries, desc="Inserting countries"):
+        supabase.table('countries').insert({"code": country['code'], "continent_code": country['continent_code'], "name": country['name'], "area_km2": country['area_km2']}).execute()
 
-
-with open('countries_by_continent.json', 'r', encoding='utf-8') as f:
-    countries_by_continent = json.load(f)
-    for continent_code, country_codes in tqdm(countries_by_continent.items(), desc="Inserting countries"):
-        for country_code in country_codes:
-            supabase.table('countries').insert({"code": country_code, "continent_code": continent_code, "name": country_name_dict.get(country_code)}).execute()
-
-with open('mapillary_city_coverage.json', 'r', encoding='utf-8') as f:
-    mapillary_city_coverage = json.load(f)
-    for country_code, cities in tqdm(mapillary_city_coverage.items(), desc="Inserting cities"):
-        for city_name, city_data in cities.items():
-            supabase.table('cities').insert({"country_code": country_code, "name": city_name, "latitude": city_data['lat'], "longitude": city_data['lon'], "population": city_data['pop']}).execute()
+with open('cities.json', 'r', encoding='utf-8') as f:
+    cities = json.load(f)
+    for city in tqdm(cities, desc="Inserting cities"):
+        supabase.table('cities').insert({"name": city['name'], "country_code": city['country_code'], "latitude": city['lat'], "longitude": city['lon'], "population": city['pop']}).execute()
 
     

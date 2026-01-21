@@ -1,6 +1,7 @@
 create table public.continents (
   code text primary key,
-  name text not null
+  name text not null,
+  area_km2 float not null
 );
 
 alter table public.continents enable row level security;
@@ -13,7 +14,8 @@ create policy "Allow public read access"
 create table public.countries (
   code text primary key,
   continent_code text not null references public.continents(code),
-  name text not null
+  name text not null,
+  area_km2 float not null
 );
 
 
