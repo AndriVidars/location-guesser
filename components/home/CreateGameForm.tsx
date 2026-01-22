@@ -38,18 +38,26 @@ export const CreateGameForm = ({
 
             <div className="space-y-4">
                 <div className="flex gap-4">
-                    <input
-                        type="number"
-                        value={rounds}
-                        onChange={e => setRounds(Number(e.target.value))}
-                        className="w-full border-b outline-none"
-                    />
-                    <input
-                        type="number"
-                        value={time}
-                        onChange={e => setTime(Number(e.target.value))}
-                        className="w-full border-b outline-none"
-                    />
+                    <div className="w-full">
+                        <label className="text-[10px] text-zinc-400 uppercase">Rounds</label>
+                        <input
+                            type="number"
+                            value={rounds}
+                            onChange={e => setRounds(Number(e.target.value))}
+                            onBlur={() => setRounds(Math.min(Math.max(rounds, 5), 20))}
+                            className="w-full border-b outline-none text-sm py-1"
+                        />
+                    </div>
+                    <div className="w-full">
+                        <label className="text-[10px] text-zinc-400 uppercase">Time/Round (s)</label>
+                        <input
+                            type="number"
+                            value={time}
+                            onChange={e => setTime(Number(e.target.value))}
+                            onBlur={() => setTime(Math.min(Math.max(time, 30), 120))}
+                            className="w-full border-b outline-none text-sm py-1"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex justify-between text-[10px]">

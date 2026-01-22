@@ -26,12 +26,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         }
         setPlayer(JSON.parse(stored));
 
-        async function init() {
+        // Initial fetch
+        const fetchGameState = async () => {
             const { data: g } = await supabaseClient.from('games').select('*').eq('id', gameId).single();
-            if (!g) return router.push('/');
+            if (!g) {
+                router.push('/');
+                return;
+            }
             setGame(g);
 
-            // Fetch initial players
             const { data: pList } = await supabaseClient.from('game_players').select('*').eq('game_id', gameId);
             if (pList) setPlayers(pList);
 
@@ -46,16 +49,17 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 if (r) setRound(r);
             }
             setLoading(false);
-        }
+        };
 
-        init();
+        fetchGameState();
 
-        const sub = supabaseClient
+        // Realtime subscription
+        const channel = supabaseClient
             .channel(`game:${gameId}`)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
-                p => setGame(p.new as Game))
+                (payload) => setGame(payload.new as Game))
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_rounds', filter: `game_id=eq.${gameId}` },
-                p => setRound(p.new as GameRound))
+                (payload) => setRound(payload.new as GameRound))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` },
                 async () => {
                     const { data: pList } = await supabaseClient.from('game_players').select('*').eq('game_id', gameId);
@@ -63,14 +67,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 })
             .subscribe();
 
-        return () => { supabaseClient.removeChannel(sub); };
+        return () => {
+            channel.unsubscribe();
+        };
     }, [gameId, router]);
 
     const handleCopy = () => {
         if (!game?.invite_code) return;
         navigator.clipboard.writeText(game.invite_code);
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleStart = async () => {
