@@ -40,23 +40,27 @@ export const CreateGameForm = ({
                 <div className="flex gap-4">
                     <div className="w-full">
                         <label className="text-[10px] text-zinc-400 uppercase">Rounds</label>
-                        <input
-                            type="number"
+                        <select
                             value={rounds}
                             onChange={e => setRounds(Number(e.target.value))}
-                            onBlur={() => setRounds(Math.min(Math.max(rounds, 5), 20))}
-                            className="w-full border-b outline-none text-sm py-1"
-                        />
+                            className="w-full border-b outline-none text-sm py-1 bg-transparent cursor-pointer"
+                        >
+                            {Array.from({ length: 16 }, (_, i) => i + 5).map(num => (
+                                <option key={num} value={num}>{num}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className="w-full">
-                        <label className="text-[10px] text-zinc-400 uppercase">Time/Round (s)</label>
-                        <input
-                            type="number"
+                        <label className="text-[10px] text-zinc-400 uppercase">Time/Round (S)</label>
+                        <select
                             value={time}
                             onChange={e => setTime(Number(e.target.value))}
-                            onBlur={() => setTime(Math.min(Math.max(time, 30), 120))}
-                            className="w-full border-b outline-none text-sm py-1"
-                        />
+                            className="w-full border-b outline-none text-sm py-1 bg-transparent cursor-pointer"
+                        >
+                            {Array.from({ length: 10 }, (_, i) => (i + 3) * 10).map(num => (
+                                <option key={num} value={num}>{num}s</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
@@ -89,7 +93,7 @@ export const CreateGameForm = ({
             <div className="flex flex-col gap-2 pt-4">
                 <button
                     onClick={onSubmit}
-                    disabled={loading}
+                    disabled={loading || !name.trim()}
                     className="bg-zinc-900 text-white py-2 cursor-pointer hover:bg-zinc-800 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {loading ? '...' : 'Create'}

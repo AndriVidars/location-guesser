@@ -25,9 +25,11 @@ export const GameView = ({ game, round }: GameViewProps) => {
                     </div>
 
                     {/* Guess Map */}
-                    <div className="absolute bottom-8 right-8 z-20 group">
-                        <div className="h-40 w-52 overflow-hidden border border-white/20 bg-black/50 backdrop-blur-md transition-all duration-300 group-hover:h-[400px] group-hover:w-[600px]">
-                            <GuessMap />
+                    <div className="absolute bottom-8 right-14 z-20 group">
+                        <div className="h-40 w-52 transition-all duration-300 group-hover:h-[400px] group-hover:w-[600px]">
+                            <GuessMap onGuess={(lat, lng) => {
+                                console.log(lat, lng);
+                            }} />
                         </div>
                     </div>
                 </>

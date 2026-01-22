@@ -18,6 +18,29 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
 
+    // Safeguard against accidental exit
+    useEffect(() => {
+        if (!game?.is_active) return;
+
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+        };
+
+        const handlePopState = (e: PopStateEvent) => {
+            window.history.pushState(null, '', window.location.href);
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        window.addEventListener('popstate', handlePopState);
+
+        window.history.pushState(null, '', window.location.href);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [game?.is_active, router]);
+
     useEffect(() => {
         const stored = localStorage.getItem('game_player');
         if (!stored) {

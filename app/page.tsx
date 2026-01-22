@@ -9,6 +9,8 @@ import { MainMenu } from '@/components/home/MainMenu';
 import { CreateGameForm } from '@/components/home/CreateGameForm';
 import { JoinGameForm } from '@/components/home/JoinGameForm';
 
+import { Logo } from '@/components/common/Logo';
+
 export default function Home() {
   const router = useRouter();
   const [view, setView] = useState<'main' | 'create' | 'join'>('main');
@@ -21,6 +23,8 @@ export default function Home() {
   const [region, setRegion] = useState<'world' | 'continent' | 'country'>('world');
   const [regionId, setRegionId] = useState('');
   const [code, setCode] = useState('');
+
+  const [error, setError] = useState<string | null>(null);
 
   // Metadata
   const [continents, setContinents] = useState<ContinentData[]>([]);
@@ -36,6 +40,7 @@ export default function Home() {
   const handleAction = async () => {
     if (!name) return;
     setLoading(true);
+    setError(null);
     try {
       const res = view === 'create'
         ? await createGame(name, rounds, time, region === 'continent' ? regionId : null, region === 'country' ? regionId : null)
@@ -44,21 +49,25 @@ export default function Home() {
       if (res) {
         localStorage.setItem('game_player', JSON.stringify(res.player));
         router.push(`/game/${res.game.id}`);
+      } else {
+        if (view === 'join') setError('Invalid or inactive game code');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  const setViewAndReset = (v: 'main' | 'create' | 'join') => {
+    setError(null);
+    setView(v);
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-xs uppercase tracking-wider">
       <div className="w-64 space-y-12">
-        <div className="flex items-center gap-3">
-          <span className="text-xl">🌍</span>
-          <h1 className="font-bold text-lg">Location Guesser</h1>
-        </div>
+        <Logo />
 
-        {view === 'main' && <MainMenu onSelect={setView} />}
+        {view === 'main' && <MainMenu onSelect={setViewAndReset} />}
 
         {view === 'create' && (
           <CreateGameForm
@@ -68,7 +77,7 @@ export default function Home() {
             region={region} setRegion={setRegion}
             regionId={regionId} setRegionId={setRegionId}
             continents={continents} countries={countries}
-            onSubmit={handleAction} onCancel={() => setView('main')}
+            onSubmit={handleAction} onCancel={() => setViewAndReset('main')}
             loading={loading}
           />
         )}
@@ -77,8 +86,9 @@ export default function Home() {
           <JoinGameForm
             name={name} setName={setName}
             code={code} setCode={setCode}
-            onSubmit={handleAction} onCancel={() => setView('main')}
+            onSubmit={handleAction} onCancel={() => setViewAndReset('main')}
             loading={loading}
+            error={error}
           />
         )}
       </div>

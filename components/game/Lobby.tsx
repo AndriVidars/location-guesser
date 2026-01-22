@@ -1,5 +1,6 @@
 import { Copy, Check } from 'lucide-react';
 import type { Game, GamePlayer } from '@/lib/types/game';
+import { Logo } from '@/components/common/Logo';
 
 interface LobbyProps {
     game: Game;
@@ -23,10 +24,13 @@ export const Lobby = ({
     loading
 }: LobbyProps) => {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-xs uppercase tracking-widest bg-white text-zinc-900">
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-xs uppercase tracking-widest bg-white text-zinc-900 relative">
+            <div className="absolute top-6 left-6">
+                <Logo />
+            </div>
             <div className="w-64 space-y-12">
                 <header className="space-y-4 text-center">
-                    <h1 className="text-xl font-bold tracking-tight">Lobby</h1>
+                    <h1 className="text-xl font-bold tracking-tight">Game Lobby</h1>
                     <div className="flex flex-col items-center gap-2 pt-4">
                         <p className="text-[10px] text-zinc-400 uppercase">Invite Code</p>
                         <div className="flex items-center gap-2">
@@ -48,7 +52,7 @@ export const Lobby = ({
                         <div className="space-y-2">
                             {players.map(p => (
                                 <div key={p.player_id} className="flex justify-between items-center">
-                                    <span>{p.name}</span>
+                                    <span className="normal-case">{p.name}</span>
                                     {p.is_host && <span className="text-[10px] text-zinc-400 border border-zinc-100 px-1">Host</span>}
                                 </div>
                             ))}
