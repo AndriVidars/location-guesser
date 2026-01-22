@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import StreetView from "@/components/maps/StreetView";
 import GuessMap from "@/components/maps/GuessMap";
 import type { Game, GameRound } from '@/lib/types/game';
@@ -8,6 +9,20 @@ interface GameViewProps {
 }
 
 export const GameView = ({ game, round }: GameViewProps) => {
+    const [timeLeft, setTimeLeft] = useState(game.time_limit);
+
+    useEffect(() => {
+        if (!round) return;
+
+        setTimeLeft(game.time_limit);
+
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [round, game.time_limit]);
+
     return (
         <div className="relative min-h-screen bg-black overflow-hidden font-sans uppercase tracking-widest text-white">
             {round ? (
@@ -21,6 +36,16 @@ export const GameView = ({ game, round }: GameViewProps) => {
                         <div className="bg-black/50 backdrop-blur-sm p-3 border border-white/10 w-fit">
                             <p className="text-[10px] text-zinc-400 mb-1 leading-none">Round</p>
                             <p className="text-sm font-bold leading-none">{game.current_round} / {game.num_rounds}</p>
+                        </div>
+                    </div>
+
+                    {/* Timer */}
+                    <div className="absolute top-8 right-8 z-10 pointer-events-none">
+                        <div className="bg-black/50 backdrop-blur-sm p-3 border border-white/10 w-20 text-center">
+                            <p className="text-[10px] text-zinc-400 mb-1 leading-none">Time</p>
+                            <p className={`text-sm font-bold leading-none ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : ''}`}>
+                                {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                            </p>
                         </div>
                     </div>
 

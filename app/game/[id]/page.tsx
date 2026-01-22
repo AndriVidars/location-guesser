@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseClient } from '@/lib/supabase';
 import { startGame } from '@/lib/server/game';
@@ -18,28 +18,34 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
 
+    const gameRef = useRef(game);
+    useEffect(() => { gameRef.current = game; }, [game]); // necessary?
+
     // Safeguard against accidental exit
     useEffect(() => {
-        if (!game?.is_active) return;
-
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            e.preventDefault();
+            if (gameRef.current?.is_active) {
+                e.preventDefault();
+            }
         };
 
         const handlePopState = (e: PopStateEvent) => {
-            window.history.pushState(null, '', window.location.href);
+            if (gameRef.current?.is_active) {
+                window.history.pushState(null, '', window.location.href);
+            }
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
         window.addEventListener('popstate', handlePopState);
 
+        // Initial trap
         window.history.pushState(null, '', window.location.href);
 
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
             window.removeEventListener('popstate', handlePopState);
         };
-    }, [game?.is_active, router]);
+    }, []);
 
     useEffect(() => {
         const stored = localStorage.getItem('game_player');

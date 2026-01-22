@@ -81,7 +81,7 @@ export const Lobby = ({
                             {loading ? '...' : 'Start Game'}
                         </button>
                     ) : (
-                        <p className="text-zinc-400 text-center animate-pulse">Waiting for host...</p>
+                        <p className="text-zinc-400 text-center animate-pulse">Waiting for host to start ...</p>
                     )}
                 </div>
             </div>
