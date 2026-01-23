@@ -3,7 +3,7 @@
 import { supabaseServer } from "../supabase";
 import type { Game, GamePlayer, GameRound } from "../types/game";
 import { generateInviteCode } from "../utils/game";
-import { getRandomCity } from "./geo";
+import { getRandomCity, getContinentArea } from "./geo";
 import { getNearestImageId } from "./mapillary";
 
 export async function createGame(
@@ -11,7 +11,6 @@ export async function createGame(
     numRounds: number,
     timeLimit: number,
     continentCode: string | null,
-    countryCode: string | null
 ): Promise<{ game: Game; player: GamePlayer } | null> {
     const inviteCode = generateInviteCode();
     const { data: gameData, error } = await supabaseServer.from('games').insert({
@@ -19,13 +18,14 @@ export async function createGame(
         num_rounds: numRounds,
         time_limit: timeLimit,
         continent_code: continentCode,
-        country_code: countryCode
     }).select().single();
 
     if (error) {
         console.error('Error creating game:', error);
         return null;
     }
+
+    gameData.game_map_area_km2 = continentCode ? await getContinentArea(continentCode) : 149e6; // default use earths total land area
 
     const { data: playerData, error: playerError } = await supabaseServer.from('game_players').insert({
         game_id: gameData.id,
@@ -141,6 +141,7 @@ export async function nextRound(
     while (!imageId) {
         cityData = await getRandomCity(game.continent_code, game.country_code);
         if (cityData) {
+            //console.log('Found city:', cityData);
             imageId = await getNearestImageId(cityData.latitude, cityData.longitude);
         }
     }

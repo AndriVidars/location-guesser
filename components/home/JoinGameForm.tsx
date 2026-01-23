@@ -47,7 +47,7 @@ export const JoinGameForm = ({
                 </button>
                 <button
                     onClick={onCancel}
-                    className="text-zinc-400 text-[10px] cursor-pointer hover:text-zinc-600 transition-colors"
+                    className="text-zinc-600 text-[10px] cursor-pointer hover:text-zinc-800 transition-colors"
                 >
                     Cancel
                 </button>

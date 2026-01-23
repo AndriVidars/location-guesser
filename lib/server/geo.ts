@@ -64,6 +64,20 @@ export async function getContinents(): Promise<ContinentData[]> {
     return data || [];
 }
 
+export async function getContinentArea(continentCode: string): Promise<number> {
+    const { data, error } = await supabaseServer
+        .from('continents')
+        .select('area_km2')
+        .eq('code', continentCode)
+        .single();
+
+    if (error || !data) {
+        console.error('Error fetching continent area:', error);
+        return 149e6; // default use earths total land area
+    }
+    return data.area_km2;
+}
+
 export async function getCountries(continentCode?: string | null): Promise<CountryData[]> {
     let query = supabaseServer
         .from('countries')

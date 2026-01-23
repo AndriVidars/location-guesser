@@ -32,7 +32,7 @@ export const Lobby = ({
                 <header className="space-y-4 text-center">
                     <h1 className="text-xl font-bold tracking-tight">Game Lobby</h1>
                     <div className="flex flex-col items-center gap-2 pt-4">
-                        <p className="text-[10px] text-zinc-400 uppercase">Invite Code</p>
+                        <p className="text-[10px] text-zinc-600 uppercase">Invite Code</p>
                         <div className="flex items-center gap-2">
                             <span className="text-2xl font-bold tracking-[0.2em]">{inviteCode}</span>
                             <button
@@ -48,12 +48,12 @@ export const Lobby = ({
 
                 <div className="space-y-4 border-y border-zinc-100 py-8">
                     <div className="space-y-2">
-                        <p className="text-zinc-400 text-[10px] mb-4">Players</p>
+                        <p className="text-zinc-600 text-[10px] mb-4">Players</p>
                         <div className="space-y-2">
                             {players.map(p => (
                                 <div key={p.player_id} className="flex justify-between items-center">
                                     <span className="normal-case">{p.name}</span>
-                                    {p.is_host && <span className="text-[10px] text-zinc-400 border border-zinc-100 px-1">Host</span>}
+                                    {p.is_host && <span className="text-[10px] text-zinc-600 border border-zinc-200 px-1">Host</span>}
                                 </div>
                             ))}
                         </div>
@@ -62,11 +62,11 @@ export const Lobby = ({
 
                 <div className="space-y-4 border-b border-zinc-100 pb-8">
                     <div className="flex justify-between">
-                        <span className="text-zinc-400">Rounds</span>
+                        <span className="text-zinc-600">Rounds</span>
                         <span>{game.num_rounds}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-zinc-400">Time Limit</span>
+                        <span className="text-zinc-600">Time Limit</span>
                         <span>{game.time_limit}s</span>
                     </div>
                 </div>
@@ -81,7 +81,7 @@ export const Lobby = ({
                             {loading ? '...' : 'Start Game'}
                         </button>
                     ) : (
-                        <p className="text-zinc-400 text-center animate-pulse">Waiting for host to start ...</p>
+                        <p className="text-zinc-600 text-center animate-pulse">Waiting for host to start ...</p>
                     )}
                 </div>
             </div>

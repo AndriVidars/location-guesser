@@ -1,4 +1,4 @@
-import { ContinentData, CountryData } from "@/lib/types/geo";
+import { ContinentData } from "@/lib/types/geo";
 
 interface CreateGameFormProps {
     name: string;
@@ -7,12 +7,11 @@ interface CreateGameFormProps {
     setRounds: (rounds: number) => void;
     time: number;
     setTime: (time: number) => void;
-    region: 'world' | 'continent' | 'country';
-    setRegion: (region: 'world' | 'continent' | 'country') => void;
+    region: 'world' | 'continent';
+    setRegion: (region: 'world' | 'continent') => void;
     regionId: string;
     setRegionId: (id: string) => void;
     continents: ContinentData[];
-    countries: CountryData[];
     onSubmit: () => void;
     onCancel: () => void;
     loading: boolean;
@@ -24,7 +23,7 @@ export const CreateGameForm = ({
     time, setTime,
     region, setRegion,
     regionId, setRegionId,
-    continents, countries,
+    continents,
     onSubmit, onCancel, loading
 }: CreateGameFormProps) => {
     return (
@@ -39,7 +38,7 @@ export const CreateGameForm = ({
             <div className="space-y-4">
                 <div className="flex gap-4">
                     <div className="w-full">
-                        <label className="text-[10px] text-zinc-400 uppercase">Rounds</label>
+                        <label className="text-[10px] text-zinc-600 uppercase">Rounds</label>
                         <select
                             value={rounds}
                             onChange={e => setRounds(Number(e.target.value))}
@@ -51,7 +50,7 @@ export const CreateGameForm = ({
                         </select>
                     </div>
                     <div className="w-full">
-                        <label className="text-[10px] text-zinc-400 uppercase">Time/Round (S)</label>
+                        <label className="text-[10px] text-zinc-600 uppercase">Time/Round (S)</label>
                         <select
                             value={time}
                             onChange={e => setTime(Number(e.target.value))}
@@ -65,11 +64,11 @@ export const CreateGameForm = ({
                 </div>
 
                 <div className="flex justify-between text-[10px]">
-                    {['world', 'continent', 'country'].map(m => (
+                    {['world', 'continent'].map(m => (
                         <button
                             key={m}
                             onClick={() => setRegion(m as any)}
-                            className={`${region === m ? 'font-bold' : 'text-zinc-300'} cursor-pointer hover:text-zinc-900 transition-colors`}
+                            className={`${region === m ? 'font-bold' : 'text-zinc-500'} cursor-pointer hover:text-zinc-900 transition-colors`}
                         >
                             {m}
                         </button>
@@ -83,7 +82,7 @@ export const CreateGameForm = ({
                         className="w-full border-b bg-transparent outline-none cursor-pointer"
                     >
                         <option value="">Select...</option>
-                        {(region === 'continent' ? continents : countries).map(i => (
+                        {region === 'continent' && continents.map(i => (
                             <option key={i.code} value={i.code}>{i.name}</option>
                         ))}
                     </select>
@@ -100,7 +99,7 @@ export const CreateGameForm = ({
                 </button>
                 <button
                     onClick={onCancel}
-                    className="text-zinc-400 text-[10px] cursor-pointer hover:text-zinc-600 transition-colors"
+                    className="text-zinc-600 text-[10px] cursor-pointer hover:text-zinc-800 transition-colors"
                 >
                     Cancel
                 </button>

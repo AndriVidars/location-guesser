@@ -8,6 +8,7 @@ export interface Game {
     country_code: string | null;
     current_round: number;
     is_active: boolean;
+    game_map_area_km2: number;
 }
 
 export interface GamePlayer {

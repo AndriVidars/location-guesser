@@ -11,6 +11,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.91.0",
     "framer-motion": "^12.28.1",
+    "geolib": "^3.3.4",
     "lucide-react": "^0.562.0",
     "mapillary-js": "^4.1.2",
     "maplibre-gl": "^5.16.0",

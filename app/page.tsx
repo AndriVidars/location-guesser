@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createGame, joinGame } from '@/lib/server/game';
-import { getContinents, getCountries } from '@/lib/server/geo';
-import type { ContinentData, CountryData } from '@/lib/types/geo';
+import { getContinents } from '@/lib/server/geo';
+import type { ContinentData } from '@/lib/types/geo';
 import { MainMenu } from '@/components/home/MainMenu';
 import { CreateGameForm } from '@/components/home/CreateGameForm';
 import { JoinGameForm } from '@/components/home/JoinGameForm';
@@ -20,7 +20,7 @@ export default function Home() {
   const [name, setName] = useState('');
   const [rounds, setRounds] = useState(5);
   const [time, setTime] = useState(60);
-  const [region, setRegion] = useState<'world' | 'continent' | 'country'>('world');
+  const [region, setRegion] = useState<'world' | 'continent'>('world');
   const [regionId, setRegionId] = useState('');
   const [code, setCode] = useState('');
 
@@ -28,12 +28,11 @@ export default function Home() {
 
   // Metadata
   const [continents, setContinents] = useState<ContinentData[]>([]);
-  const [countries, setCountries] = useState<CountryData[]>([]);
+
 
   useEffect(() => {
-    Promise.all([getContinents(), getCountries()]).then(([conts, counts]) => {
+    Promise.all([getContinents()]).then(([conts]) => {
       setContinents(conts);
-      setCountries(counts);
     });
   }, []);
 
@@ -43,7 +42,7 @@ export default function Home() {
     setError(null);
     try {
       const res = view === 'create'
-        ? await createGame(name, rounds, time, region === 'continent' ? regionId : null, region === 'country' ? regionId : null)
+        ? await createGame(name, rounds, time, region === 'continent' ? regionId : null)
         : await joinGame(code, name);
 
       if (res) {
@@ -76,7 +75,7 @@ export default function Home() {
             time={time} setTime={setTime}
             region={region} setRegion={setRegion}
             regionId={regionId} setRegionId={setRegionId}
-            continents={continents} countries={countries}
+            continents={continents}
             onSubmit={handleAction} onCancel={() => setViewAndReset('main')}
             loading={loading}
           />

@@ -4,7 +4,7 @@ import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseClient } from '@/lib/supabase';
 import { startGame } from '@/lib/server/game';
-import type { Game, GamePlayer, GameRound } from '@/lib/types/game';
+import type { Game, GamePlayer, GameRound, GameRoundPlayer } from '@/lib/types/game';
 import { Lobby } from '@/components/game/Lobby';
 import { GameView } from '@/components/game/GameView';
 
@@ -15,6 +15,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     const [player, setPlayer] = useState<GamePlayer | null>(null);
     const [players, setPlayers] = useState<GamePlayer[]>([]);
     const [round, setRound] = useState<GameRound | null>(null);
+    const [roundPlayer, setRoundPlayer] = useState<GameRoundPlayer | null>(null);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
 
@@ -53,7 +54,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             router.push('/');
             return;
         }
-        setPlayer(JSON.parse(stored));
+        const currentPlayer = JSON.parse(stored) as GamePlayer;
+        setPlayer(currentPlayer);
 
         // Initial fetch
         const fetchGameState = async () => {
@@ -75,8 +77,19 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     .eq('round_number', g.current_round)
                     .eq('is_active', true)
                     .single();
-                if (r) setRound(r);
+
+                if (r) {
+                    setRound(r);
+                    const { data: rp } = await supabaseClient
+                        .from('game_round_players')
+                        .select('*')
+                        .eq('game_round_id', r.id)
+                        .eq('player_id', currentPlayer.player_id)
+                        .single();
+                    if (rp) setRoundPlayer(rp);
+                }
             }
+
             setLoading(false);
         };
 
@@ -88,11 +101,23 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
                 (payload) => setGame(payload.new as Game))
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_rounds', filter: `game_id=eq.${gameId}` },
-                (payload) => setRound(payload.new as GameRound))
+                (payload) => {
+                    setRound(payload.new as GameRound);
+                    setRoundPlayer(null); // Clear previous guess for the new round
+                })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` },
                 async () => {
                     const { data: pList } = await supabaseClient.from('game_players').select('*').eq('game_id', gameId);
                     if (pList) setPlayers(pList);
+                })
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'game_round_players',
+                filter: `player_id=eq.${currentPlayer.player_id}`
+            },
+                (payload) => {
+                    setRoundPlayer(payload.new as GameRoundPlayer);
                 })
             .subscribe();
 
@@ -149,5 +174,5 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         );
     }
 
-    return <GameView game={game!} round={round} />;
+    return <GameView game={game!} round={round} roundPlayer={roundPlayer} />;
 }
