@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Viewer, ViewerOptions } from 'mapillary-js';
 
 interface StreetViewProps {
@@ -11,6 +12,8 @@ interface StreetViewProps {
 export default function StreetView({ imageId, onLoad }: StreetViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -49,6 +52,11 @@ export default function StreetView({ imageId, onLoad }: StreetViewProps) {
           onLoad();
         }
       } catch (e) {
+        console.error('Street View error:', e);
+        setError('Street View service unavailable. Returning to home...');
+        setTimeout(() => {
+          router.push('/');
+        }, 3000);
         return;
       }
     }
@@ -62,7 +70,18 @@ export default function StreetView({ imageId, onLoad }: StreetViewProps) {
         viewerRef.current = null;
       }
     };
-  }, [imageId]);
+  }, [imageId, router, onLoad]);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center w-full h-full bg-black text-white">
+        <div className="text-center p-4">
+          <p className="text-red-500 font-bold mb-2">Error</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full">

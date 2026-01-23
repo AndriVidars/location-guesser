@@ -230,7 +230,7 @@ export async function submitGuess(
     playerId: string,
     guessLat: number,
     guessLng: number
-): Promise<{ success: true; score: number } | { success: false; error: string }> {
+): Promise<number> {
     // Fetch game and round data
     const { data: game, error: gameError } = await supabaseServer
         .from('games')
@@ -238,8 +238,16 @@ export async function submitGuess(
         .eq('id', gameId)
         .single();
 
+    const { data: player, error: playerError } = await supabaseServer
+        .from('game_players')
+        .select('*')
+        .eq('game_id', gameId)
+        .eq('player_id', playerId)
+        .single();
+
     if (gameError || !game) {
-        return { success: false, error: 'Game not found' };
+        console.error('Game not found');
+        return 0;
     }
 
     const { data: round, error: roundError } = await supabaseServer
@@ -249,7 +257,8 @@ export async function submitGuess(
         .single();
 
     if (roundError || !round) {
-        return { success: false, error: 'Round not found' };
+        console.error('Round not found');
+        return 0;
     }
 
     // Calculate distance in meters, then convert to km
@@ -264,20 +273,87 @@ export async function submitGuess(
     console.log('Score:', score);
 
     // Upsert the game_round_player record
-    const { error: upsertError } = await supabaseServer
+    await supabaseServer
         .from('game_round_players')
         .update({
             guess_latitude: guessLat,
             guess_longitude: guessLng,
-            score: score
+            score: score,
+            distance: distanceKm
         })
         .eq('game_round_id', roundId)
         .eq('player_id', playerId);
 
-    if (upsertError) {
-        console.error('Error updating game round player:', upsertError);
-        return { success: false, error: 'Failed to save guess' };
-    }
+    await supabaseServer
+        .from('game_players')
+        .update({
+            score: player.score + score
+        })
+        .eq('game_id', gameId)
+        .eq('player_id', playerId);
 
-    return { success: true, score };
+    return score;
+}
+
+export async function submitNoGuess(
+    gameId: string,
+    roundId: string,
+    playerId: string
+): Promise<void> {
+    // Just set score to 0 for this round
+    await supabaseServer
+        .from('game_round_players')
+        .update({
+            score: 0
+        })
+        .eq('game_round_id', roundId)
+        .eq('player_id', playerId);
+}
+
+
+export async function getPlayerGuesses(
+    gameId: string,
+    playerId: string
+): Promise<any[]> {
+    const { data: rounds, error: roundsError } = await supabaseServer
+        .from('game_rounds')
+        .select('id, sampled_latitude, sampled_longitude, round_number')
+        .eq('game_id', gameId);
+
+    if (roundsError || !rounds) return [];
+
+    const { data: guesses, error: guessesError } = await supabaseServer
+        .from('game_round_players')
+        .select('*')
+        .in('game_round_id', rounds.map((r: { id: string }) => r.id))
+        .eq('player_id', playerId)
+        .not('score', 'is', null);
+
+    if (guessesError || !guesses) return [];
+
+    return guesses.map((g: any) => {
+        const r = rounds.find((round: any) => round.id === g.game_round_id);
+        return {
+            ...g,
+            round: r
+        };
+    });
+}
+
+export async function finishGame(gameId: string, playerId: string): Promise<boolean> {
+    const { data: player, error: playerError } = await supabaseServer
+        .from('game_players')
+        .select('is_host')
+        .eq('game_id', gameId)
+        .eq('player_id', playerId)
+        .single();
+
+    if (playerError || !player?.is_host) return false;
+
+    const { error } = await supabaseServer
+        .from('games')
+        .update({ is_active: false })
+        .eq('id', gameId);
+
+    return !error;
 }

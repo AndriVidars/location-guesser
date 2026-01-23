@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseClient } from '@/lib/supabase';
-import { startGame } from '@/lib/server/game';
+import { startGame, nextRound } from '@/lib/server/game';
 import type { Game, GamePlayer, GameRound, GameRoundPlayer } from '@/lib/types/game';
 import { Lobby } from '@/components/game/Lobby';
 import { GameView } from '@/components/game/GameView';
@@ -16,11 +16,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     const [players, setPlayers] = useState<GamePlayer[]>([]);
     const [round, setRound] = useState<GameRound | null>(null);
     const [roundPlayer, setRoundPlayer] = useState<GameRoundPlayer | null>(null);
+    const [roundPlayers, setRoundPlayers] = useState<GameRoundPlayer[]>([]); // All players' round data
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
 
     const gameRef = useRef(game);
-    useEffect(() => { gameRef.current = game; }, [game]); // necessary?
+    const roundRef = useRef(round);
+
+    useEffect(() => { gameRef.current = game; }, [game]);
+    useEffect(() => { roundRef.current = round; }, [round]);
 
     // Safeguard against accidental exit
     useEffect(() => {
@@ -87,6 +91,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         .eq('player_id', currentPlayer.player_id)
                         .single();
                     if (rp) setRoundPlayer(rp);
+
+                    // Fetch all round players for the current round
+                    const { data: allRp } = await supabaseClient
+                        .from('game_round_players')
+                        .select('*')
+                        .eq('game_round_id', r.id);
+                    if (allRp) setRoundPlayers(allRp);
                 }
             }
 
@@ -101,9 +112,18 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
                 (payload) => setGame(payload.new as Game))
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_rounds', filter: `game_id=eq.${gameId}` },
-                (payload) => {
-                    setRound(payload.new as GameRound);
+                async (payload) => {
+                    const newRound = payload.new as GameRound;
+                    setRound(newRound);
                     setRoundPlayer(null); // Clear previous guess for the new round
+                    setRoundPlayers([]); // Clear all round players for the new round
+
+                    // Fetch the new round players
+                    const { data: allRp } = await supabaseClient
+                        .from('game_round_players')
+                        .select('*')
+                        .eq('game_round_id', newRound.id);
+                    if (allRp) setRoundPlayers(allRp);
                 })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` },
                 async () => {
@@ -118,6 +138,23 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             },
                 (payload) => {
                     setRoundPlayer(payload.new as GameRoundPlayer);
+                })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'game_round_players'
+            },
+                async (payload) => {
+                    // When any player updates their score, refetch all round players if we're in an active round
+                    const updatedPlayer = payload.new as GameRoundPlayer;
+                    // Use roundRef to access current round state in closure
+                    if (roundRef.current && updatedPlayer.game_round_id === roundRef.current.id) {
+                        const { data: allRp } = await supabaseClient
+                            .from('game_round_players')
+                            .select('*')
+                            .eq('game_round_id', roundRef.current.id);
+                        if (allRp) setRoundPlayers(allRp);
+                    }
                 })
             .subscribe();
 
@@ -139,6 +176,26 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
         if (newRound) {
             // Manually fetch the updated game state to ensure immediate transition for the host
+            const { data: updatedGame } = await supabaseClient
+                .from('games')
+                .select('*')
+                .eq('id', gameId)
+                .single();
+
+            if (updatedGame) setGame(updatedGame);
+            setRound(newRound);
+        }
+        setLoading(false);
+    };
+
+    const handleNextRound = async () => {
+        if (!player?.is_host || !round) return;
+        setLoading(true);
+        const newRound = await nextRound(gameId, player.player_id);
+
+        if (newRound) {
+            // The subscription will handle updating the game and round state
+            // But we can manually update for immediate feedback
             const { data: updatedGame } = await supabaseClient
                 .from('games')
                 .select('*')
@@ -174,5 +231,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         );
     }
 
-    return <GameView game={game!} round={round} roundPlayer={roundPlayer} player={player!} />;
+    return (
+        <GameView
+            game={game!}
+            round={round}
+            roundPlayer={roundPlayer}
+            player={player!}
+            players={players}
+            roundPlayers={roundPlayers}
+            onNextRound={handleNextRound}
+            loading={loading}
+        />
+    );
 }

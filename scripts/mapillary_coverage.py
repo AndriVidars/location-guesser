@@ -55,7 +55,7 @@ def main():
     for country_code in tqdm(sorted_country_codes, desc="Processing countries"):
         country_cities = cities_by_country[country_code]
         country_cities.sort(key=lambda x: x['population'], reverse=True)
-        top_cities = country_cities[:10]
+        top_cities = country_cities[:10] # TODO: should we increase this to have more covege in game?
         
         for city in top_cities:
             city_name = city['name']

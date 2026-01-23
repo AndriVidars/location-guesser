@@ -37,4 +37,5 @@ export interface GameRoundPlayer {
     guess_latitude: number;
     guess_longitude: number;
     score: number;
+    distance: number | null;
 }
