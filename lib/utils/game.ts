@@ -33,10 +33,12 @@ function getScoreConfig(continentCode: string | null): { maxDist: number; k: num
 function score(dist: number, maxDist: number, k: number): number {
     const numerator = Math.exp(-dist * k) - Math.exp(-maxDist * k);
     const denominator = 1 - Math.exp(-maxDist * k);
-    return Math.round(MAX_POINTS * (numerator / denominator));
+    // so that -0 not affected
+    return Math.max(0, Math.round(MAX_POINTS * (numerator / denominator)));
 }
 
 export function calculateScore(game: Game, distance: number): number {
     const config = getScoreConfig(game.continent_code);
     return score(distance, config.maxDist, config.k);
 }
+

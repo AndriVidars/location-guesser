@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import { getDistance } from 'geolib';
 import StreetView from "@/components/maps/StreetView";
 import GuessMap from "@/components/maps/GuessMap";
-import type { Game, GameRound, GameRoundPlayer } from '@/lib/types/game';
-import { calculateScore } from '@/lib/utils/game';
+import type { Game, GameRound, GameRoundPlayer, GamePlayer } from '@/lib/types/game';
+import { submitGuess } from '@/lib/server/game';
 
 interface GameViewProps {
     game: Game;
     round: GameRound | null;
     roundPlayer: GameRoundPlayer | null;
+    player: GamePlayer;
 }
 
-export const GameView = ({ game, round, roundPlayer }: GameViewProps) => {
+export const GameView = ({ game, round, roundPlayer, player }: GameViewProps) => {
     const [timeLeft, setTimeLeft] = useState(game.time_limit);
 
     useEffect(() => {
@@ -28,7 +28,7 @@ export const GameView = ({ game, round, roundPlayer }: GameViewProps) => {
 
     return (
         <div className="relative min-h-screen bg-black overflow-hidden font-sans uppercase tracking-widest text-white">
-            {round && (!roundPlayer || (!roundPlayer.guess_latitude && !roundPlayer.guess_longitude)) ? (
+            {round && roundPlayer && roundPlayer.score === null ? (
                 <>
                     <div className="absolute inset-0">
                         <StreetView imageId={round.mapillary_image_id} />
@@ -55,22 +55,21 @@ export const GameView = ({ game, round, roundPlayer }: GameViewProps) => {
                     {/* Guess Map */}
                     <div className="absolute bottom-8 right-14 z-20 group">
                         <div className="h-40 w-52 transition-all duration-300 group-hover:h-[400px] group-hover:w-[600px]">
-                            <GuessMap onGuess={(lat, lng) => {
+                            <GuessMap onGuess={async (lat, lng) => {
                                 if (round) {
-                                    const distance = getDistance(
-                                        { latitude: lat, longitude: lng },
-                                        { latitude: round.sampled_latitude, longitude: round.sampled_longitude }
-                                    );
-                                    const distanceKm = distance / 1000;
-                                    const score = calculateScore(game, distanceKm);
-                                    console.log(`City: ${round.city_name}`);
-                                    console.log(`Distance: ${distanceKm.toFixed(2)} km`);
-                                    console.log(`Score: ${score}`);
+                                    await submitGuess(game.id, round.id, player.player_id, lat, lng);
                                 }
                             }} />
                         </div>
                     </div>
                 </>
+            ) : round && roundPlayer && roundPlayer.score !== null ? (
+                <div className="flex items-center justify-center min-h-screen text-[10px]">
+                    Location Guessed: {roundPlayer.guess_latitude}, {roundPlayer.guess_longitude} <br />
+                    Actual Location: {round.city_name}, {round.sampled_latitude}, {round.sampled_longitude} <br />
+                    Round Score: {roundPlayer.score}
+                    {/* TODO: waiting for other players and list of scores component */}
+                </div>
             ) : (
                 <div className="flex items-center justify-center min-h-screen text-[10px]">
                     Loading Round...

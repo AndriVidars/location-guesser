@@ -174,5 +174,5 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         );
     }
 
-    return <GameView game={game!} round={round} roundPlayer={roundPlayer} />;
+    return <GameView game={game!} round={round} roundPlayer={roundPlayer} player={player!} />;
 }
