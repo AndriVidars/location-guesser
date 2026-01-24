@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Location Guesser
 
-## Getting Started
+A lightweight streetview-location guessing game built with open data. Players explore random locations and guess where they are on a map.
 
-First, run the development server:
+## Data Sources & Acknowledgements
+*   **Mapillary**: Global street-level imagery and 3D viewer (`mapillary-js`).
+*   **OpenStreetMap**: Underlying map data.
+*   **Carto**: Vector basemap tiles.
+*   **MapLibre GL**: Client-side map rendering.
+
+## Tech Stack
+*   **Next.js 15**: App Router, Server Actions, and React Server Components.
+*   **Supabase**: PostgreSQL database with Realtime subscriptions for multiplayer state.
+*   **Python**: Scripts for geospatial data processing and seeding.
+
+
+# Local Setup
+
+Follow these steps to get the project running locally.
+
+### 1. Prerequisites
+- **Node.js** (v18+)
+- **Python 3.11+** (for data population scripts)
+- **Supabase Account** (or a local Supabase instance)
+- **Mapillary Developer Token** (get one [here](https://www.mapillary.com/dashboard/developers))
+
+### 2. Environment Variables
+Create a `.env.local` file in the root directory with the following keys:
 
 ```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_publishable_default_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Mapillary API
+NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN=your_mapillary_token
+```
+
+### 3. Database Setup
+This project uses Supabase. You need to apply the database schema.
+
+1. Login to Supabase CLI:
+   ```bash
+   npx supabase login
+   ```
+2. Link your local project to your remote Supabase project:
+   ```bash
+   npx supabase link --project-ref your_project_ref
+
+3. Push the migrations to the remote database:
+   ```bash
+   npx supabase db push
+   ```
+
+### 4. Populate Geo Data
+We use Python scripts to seed the database with continents, countries, and city data.
+
+1. Navigate to the scripts folder: `cd scripts`
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Run the population script (ensure your `.env.local` is set up first):
+   ```bash
+   python mapillary_coverage.py
+   python populate_geo_data_db.py
+   ```
+
+### 5. Run the Application
+Install dependencies and start the development server:
+
+```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

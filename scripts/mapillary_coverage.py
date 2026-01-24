@@ -1,4 +1,3 @@
-import pyproj
 import mapillary.interface as mly
 from geonamescache import GeonamesCache
 from collections import defaultdict
