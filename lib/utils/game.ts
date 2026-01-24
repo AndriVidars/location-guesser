@@ -8,14 +8,14 @@ const MAX_POINTS = 100;
 
 // Map configuration: continent code -> (max_dist, k)
 const scoreConfig: Record<string, { maxDist: number; k: number }> = {
-    'WORLD': { maxDist: Math.sqrt(149_000_000), k: 7.5e-4 },
-    'EU': { maxDist: Math.sqrt(10_180_000), k: 1.5e-3 },
-    'AS': { maxDist: Math.sqrt(44_579_000), k: 6e-4 },
+    'WORLD': { maxDist: Math.sqrt(149_000_000), k: 5e-4 },
+    'EU': { maxDist: Math.sqrt(10_180_000), k: 2e-3 },
+    'AS': { maxDist: Math.sqrt(44_579_000), k: 5e-4 },
     'AF': { maxDist: Math.sqrt(30_200_000), k: 5e-4 },
-    'NA': { maxDist: Math.sqrt(24_290_000), k: 8e-4 },
-    'SA': { maxDist: Math.sqrt(17_840_000), k: 7.5e-4 },
+    'NA': { maxDist: Math.sqrt(24_290_000), k: 5e-4 },
+    'SA': { maxDist: Math.sqrt(17_840_000), k: 5e-4 },
     'OC': { maxDist: Math.sqrt(8_520_000), k: 5e-4 },
-    'AN': { maxDist: Math.sqrt(14_200_000), k: 1e-3 },
+    'AN': { maxDist: Math.sqrt(14_200_000), k: 7.5e-4 },
 };
 
 function getScoreConfig(continentCode: string | null): { maxDist: number; k: number } {

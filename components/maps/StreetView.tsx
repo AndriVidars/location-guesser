@@ -35,7 +35,7 @@ export default function StreetView({ imageId, onLoad }: StreetViewProps) {
         }
 
         const options: ViewerOptions = {
-          accessToken: process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN || '',
+          accessToken: process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN!,
           container: container as HTMLElement,
           imageId: imageId,
           component: {

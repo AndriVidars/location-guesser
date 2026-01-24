@@ -154,7 +154,7 @@ export const RoundResults = ({
                                                 <span className="text-lg font-bold">
                                                     {player.totalScore.toLocaleString()}
                                                 </span>
-                                                <span className="text-[10px] text-zinc-400">/ {totalRounds * 100}</span>
+                                                <span className="text-[10px] text-zinc-400"></span>
                                             </div>
                                             {player.roundScore !== null ? (
                                                 <span className="text-[10px] text-zinc-500">
@@ -191,9 +191,15 @@ export const RoundResults = ({
                     {/* Waiting Message for Non-Host */}
                     {allPlayersFinished && !isHost && (
                         <div className="text-center pt-4">
-                            <p className="text-[10px] text-zinc-500 animate-pulse">
-                                Waiting for host to start next round...
-                            </p>
+                            {isLastRound ? (
+                                <p className="text-[10px] text-zinc-500 animate-pulse">
+                                    Waiting for host to finish game...
+                                </p>
+                            ) : (
+                                <p className="text-[10px] text-zinc-500 animate-pulse">
+                                    Waiting for host to start next round...
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>
