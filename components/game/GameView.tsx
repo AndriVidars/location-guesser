@@ -57,7 +57,7 @@ export const GameView = ({ game, round, roundPlayer, player, players, roundPlaye
     }
 
     return (
-        <div className="relative min-h-screen bg-black overflow-hidden font-sans uppercase tracking-widest text-white">
+        <div className="relative min-h-screen bg-black overflow-hidden font-sans text-white">
             {round && roundPlayer && roundPlayer.score === null ? (
                 <>
                     <div className="absolute inset-0">

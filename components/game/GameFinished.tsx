@@ -45,7 +45,7 @@ export const GameFinished = ({ gameId, playerId, players }: GameFinishedProps) =
     }));
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-white text-zinc-900 font-sans uppercase tracking-widest text-xs relative p-8">
+        <div className="flex items-center justify-center min-h-screen bg-white text-zinc-900 font-sans relative p-8">
             <div className="absolute top-6 left-6">
                 <Logo />
             </div>
@@ -66,17 +66,15 @@ export const GameFinished = ({ gameId, playerId, players }: GameFinishedProps) =
                 {/* Scoreboard Section */}
                 <div className="space-y-12">
                     <div className="text-center space-y-2">
-                        <div className="text-[10px] text-zinc-400">
-                            Final Standings
-                        </div>
+
                         <h2 className="text-xl font-bold tracking-tight">
-                            Game Over
+                            Final Standings
                         </h2>
                         <div className="h-px w-12 bg-zinc-900 mx-auto" />
                     </div>
 
                     <div className="space-y-4">
-                        <div className="flex justify-between text-[10px] text-zinc-500 border-b border-zinc-100 pb-2">
+                        <div className="flex justify-between text-[11px] text-zinc-500 border-b border-zinc-300 pb-2">
                             <div className="flex gap-4">
                                 <span className="w-4">#</span>
                                 <span>Player</span>
@@ -97,9 +95,6 @@ export const GameFinished = ({ gameId, playerId, players }: GameFinishedProps) =
                                             <span className={`text-sm ${player.player_id === playerId ? 'font-bold' : ''} ${index === 0 ? 'text-zinc-900' : 'text-zinc-600'}`}>
                                                 {player.name}
                                             </span>
-                                            {player.player_id === playerId && (
-                                                <span className="text-[9px] text-zinc-400 lowercase tracking-normal">You</span>
-                                            )}
                                         </div>
                                     </div>
                                     <div className="flex items-baseline gap-1">

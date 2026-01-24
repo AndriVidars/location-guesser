@@ -84,7 +84,7 @@ export const RoundResults = ({
     const isLastRound = currentRound >= totalRounds;
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-white text-zinc-900 font-sans uppercase tracking-widest text-xs relative p-8">
+        <div className="flex items-center justify-center min-h-screen bg-white text-zinc-900 font-sans relative p-8">
             {/* Same Logo / Map etc ... I'll assume replace_file_content works on the Return logic or I target specifically the button area if I can, but props needs destructuring update first */}
             <div className="absolute top-6 left-6">
                 <Logo />
@@ -104,7 +104,7 @@ export const RoundResults = ({
                 <div className="space-y-12">
                     {/* Header */}
                     <div className="text-center space-y-2">
-                        <div className="text-[10px] text-zinc-400">
+                        <div className="text-[11px] text-zinc-400">
                             Round {currentRound} of {totalRounds}
                         </div>
                         <h2 className="text-xl font-bold tracking-tight">
@@ -115,7 +115,7 @@ export const RoundResults = ({
 
                     {/* Scores List */}
                     <div className="space-y-4">
-                        <div className="flex justify-between text-[10px] text-zinc-500 border-b border-zinc-100 pb-2">
+                        <div className="flex justify-between text-[11px] text-zinc-500 border-b border-zinc-300 pb-2">
                             <div className="flex gap-4">
                                 <span className="w-4">#</span>
                                 <span>Player</span>
@@ -137,13 +137,17 @@ export const RoundResults = ({
                                                     {player.name}
                                                 </span>
                                                 {/* Show distance in list if available */}
-                                                {playerGuess?.distance != null ? (
+                                                {player.roundScore === null ? (
+                                                    <span className="text-[10px] text-zinc-400 lowercase tracking-normal animate-pulse">
+                                                        Waiting for guess...
+                                                    </span>
+                                                ) : playerGuess?.distance != null ? (
                                                     <span className="text-[10px] text-zinc-400 lowercase tracking-normal">
                                                         {Math.round(playerGuess.distance)} km
                                                     </span>
                                                 ) : (
                                                     <span className="text-[10px] text-zinc-400 lowercase tracking-normal italic">
-                                                        no guess
+                                                        No guess
                                                     </span>
                                                 )}
                                             </div>
@@ -158,7 +162,7 @@ export const RoundResults = ({
                                             </div>
                                             {player.roundScore !== null ? (
                                                 <span className="text-[10px] text-zinc-500">
-                                                    +{player.roundScore.toLocaleString()} <span className="opacity-50">(max 100)</span>
+                                                    +{player.roundScore.toLocaleString()} <span className="opacity-70">(max 100)</span>
                                                 </span>
                                             ) : (
                                                 <span className="text-[10px] text-zinc-400 animate-pulse">

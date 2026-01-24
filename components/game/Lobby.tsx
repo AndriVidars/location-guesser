@@ -24,7 +24,7 @@ export const Lobby = ({
     loading
 }: LobbyProps) => {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-xs uppercase tracking-widest bg-white text-zinc-900 relative">
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white text-zinc-900 relative">
             <div className="absolute top-6 left-6">
                 <Logo />
             </div>
@@ -32,7 +32,7 @@ export const Lobby = ({
                 <header className="space-y-4 text-center">
                     <h1 className="text-xl font-bold tracking-tight">Game Lobby</h1>
                     <div className="flex flex-col items-center gap-2 pt-4">
-                        <p className="text-[10px] text-zinc-600 uppercase">Invite Code</p>
+                        <p className="text-[12px] text-zinc-600">Invite Code</p>
                         <div className="flex items-center gap-2">
                             <span className="text-2xl font-bold tracking-[0.2em]">{inviteCode}</span>
                             <button
@@ -46,7 +46,7 @@ export const Lobby = ({
                     </div>
                 </header>
 
-                <div className="space-y-4 border-y border-zinc-100 py-8">
+                <div className="space-y-4 border-y border-zinc-300 py-8">
                     <div className="space-y-2">
                         <p className="text-zinc-600 text-[10px] mb-4">Players</p>
                         <div className="space-y-2">
@@ -60,7 +60,7 @@ export const Lobby = ({
                     </div>
                 </div>
 
-                <div className="space-y-4 border-b border-zinc-100 pb-8">
+                <div className="space-y-4 border-b border-zinc-300 pb-8">
                     <div className="flex justify-between">
                         <span className="text-zinc-600">Rounds</span>
                         <span>{game.num_rounds}</span>
