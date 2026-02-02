@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import type { GamePlayer, GameRoundPlayer, GameRound } from '@/lib/types/game';
 import { Logo } from '@/components/common/Logo';
 import ResultMap from '../maps/ResultMap';
+import { checkRoundExpiry } from '@/lib/server/game';
+import { useEffect } from 'react';
 
 interface RoundResultsProps {
     players: GamePlayer[];
@@ -14,6 +16,7 @@ interface RoundResultsProps {
     currentRound: number;
     totalRounds: number;
     onFinishGame: () => void;
+    timeLeft: number;
 }
 
 interface PlayerScore {
@@ -33,7 +36,8 @@ export const RoundResults = ({
     currentPlayerId,
     currentRound,
     totalRounds,
-    onFinishGame
+    onFinishGame,
+    timeLeft
 }: RoundResultsProps) => {
     // Combine player data with round scores
     const playerScores = useMemo<PlayerScore[]>(() => {
@@ -52,6 +56,15 @@ export const RoundResults = ({
     }, [players, roundPlayers]);
 
     const allPlayersFinished = playerScores.every(p => p.roundScore !== null);
+
+    // Check for round expiry for ALL players (server-side check)
+    // safeguard against players not submitting a guess/exiting the game
+    useEffect(() => {
+        if (!allPlayersFinished && timeLeft <= 0 && round?.game_id && round?.id) {
+            checkRoundExpiry(round.game_id, round.id)
+                .catch(console.error);
+        }
+    }, [timeLeft, allPlayersFinished, round]);
 
     // Prepare map data
     const mapData = useMemo(() => {
@@ -110,6 +123,11 @@ export const RoundResults = ({
                         <h2 className="text-xl font-bold tracking-tight">
                             {allPlayersFinished ? 'Scoreboard' : 'Waiting for Players'}
                         </h2>
+                        {!allPlayersFinished && timeLeft > 0 && (
+                            <div className={`text-2xl font-mono font-bold mt-1 ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : ''}`}>
+                                {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                            </div>
+                        )}
                         <div className="h-px w-12 bg-zinc-900 mx-auto" />
                     </div>
 

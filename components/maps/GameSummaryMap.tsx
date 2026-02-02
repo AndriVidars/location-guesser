@@ -33,7 +33,7 @@ export default function GameSummaryMap({ rounds }: GameSummaryMapProps) {
     const linesGeoJSON = useMemo(() => {
         return {
             type: 'FeatureCollection',
-            features: rounds.map(r => ({
+            features: rounds.filter(r => r.guess.lat && r.guess.lng).map(r => ({
                 type: 'Feature',
                 geometry: {
                     type: 'LineString',

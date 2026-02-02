@@ -335,6 +335,40 @@ export async function submitNoGuess(
         .eq('player_id', playerId);
 }
 
+export async function checkRoundExpiry(
+    gameId: string,
+    roundId: string
+): Promise<void> {
+    const { data: game } = await supabaseServer
+        .from('games')
+        .select('time_limit')
+        .eq('id', gameId)
+        .single();
+
+    const { data: round } = await supabaseServer
+        .from('game_rounds')
+        .select('created_at')
+        .eq('id', roundId)
+        .single();
+
+    if (!game || !round) return;
+
+    // Check if time has expired (allow a small buffer, e.g., 0.5 seconds)
+    const startTime = new Date(round.created_at).getTime();
+    const endTime = startTime + (game.time_limit * 1000);
+    const now = Date.now();
+
+    // If we are passed the deadline
+    if (now > endTime + 500) {
+        // Set score to 0 for ALL players in this round who have a null score
+        await supabaseServer
+            .from('game_round_players')
+            .update({ score: 0 })
+            .eq('game_round_id', roundId)
+            .is('score', null);
+    }
+}
+
 
 export async function getPlayerGuesses(
     gameId: string,

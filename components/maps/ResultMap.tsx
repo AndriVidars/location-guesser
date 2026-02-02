@@ -56,14 +56,14 @@ export default function ResultMap({ correctLocation, guesses }: ResultMapProps) 
     }, [guesses, correctLocation]);
 
     useEffect(() => {
-        // Only fit bounds if there's at least one guess to show, or just show correct location
         if (mapRef.current) {
             mapRef.current.fitBounds(bounds, {
                 padding: 50,
-                duration: 1000
+                duration: 1000,
+                maxZoom: 8
             });
         }
-    }, [bounds]); // Removed guesses.length dependency as we want it to update when bounds change regardless
+    }, [bounds]);
 
     return (
         <div className="relative w-full h-full border-4 border-zinc-900 rounded-lg overflow-hidden shadow-xl bg-zinc-100">

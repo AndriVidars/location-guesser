@@ -18,28 +18,39 @@ interface GameViewProps {
 }
 
 export const GameView = ({ game, round, roundPlayer, player, players, roundPlayers, onNextRound, loading }: GameViewProps) => {
-    const [timeLeft, setTimeLeft] = useState(game.time_limit);
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [isSubmittingTimeout, setIsSubmittingTimeout] = useState(false);
 
     useEffect(() => {
         if (!round) return;
-        // Don't start timer if player already submitted - safeguard
-        if (roundPlayer?.score !== null) return;
 
-        setTimeLeft(game.time_limit);
+        const calculateTimeLeft = () => {
+            const startTime = new Date(round.created_at).getTime();
+            const endTime = startTime + (game.time_limit * 1000);
+            const now = Date.now();
+            return Math.max(0, Math.ceil((endTime - now) / 1000));
+        };
+
+        // Initial set
+        setTimeLeft(calculateTimeLeft());
 
         const timer = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    submitNoGuess(game.id, round.id, player.player_id).catch(console.error);
-                    return 0;
+            const remaining = calculateTimeLeft();
+            setTimeLeft(remaining);
+
+            if (remaining <= 0) {
+                // Only submit no guess if we haven't scored yet and aren't already submitting
+                if (roundPlayer && roundPlayer.score === null && !isSubmittingTimeout) {
+                    setIsSubmittingTimeout(true);
+                    submitNoGuess(game.id, round.id, player.player_id)
+                        .catch(console.error)
+                        .finally(() => setIsSubmittingTimeout(false));
                 }
-                return prev - 1;
-            });
+            }
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [round, game.time_limit, roundPlayer?.score]);
+    }, [round, game.time_limit, roundPlayer, game.id, player.player_id, isSubmittingTimeout]);
 
     const handleFinish = async () => {
         if (!player.is_host) return;
@@ -105,6 +116,7 @@ export const GameView = ({ game, round, roundPlayer, player, players, roundPlaye
                     currentPlayerId={player.player_id}
                     currentRound={game.current_round}
                     totalRounds={game.num_rounds}
+                    timeLeft={timeLeft}
                 />
             ) : (
                 <div className="flex items-center justify-center min-h-screen text-[10px]">
