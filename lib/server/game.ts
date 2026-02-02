@@ -53,6 +53,7 @@ export async function joinGame(
         .select('*')
         .eq('invite_code', inviteCode.toUpperCase())
         .eq('is_active', true)
+        .eq('has_started', false)
         .single();
 
     if (gameError || !gameData) {
@@ -94,8 +95,32 @@ export async function startGame(
         return null;
     }
 
-    if (game.current_round !== 0) {
+    if (game.has_started) {
         console.error('Game has already started');
+        return null;
+    }
+
+    const { data: gamePlayer, error: gamePlayerError } = await supabaseServer
+        .from('game_players')
+        .select('is_host')
+        .eq('game_id', gameId)
+        .eq('player_id', playerId)
+        .single();
+
+    if (gamePlayerError || !gamePlayer?.is_host) {
+        console.error('Error starting game: Only the host can start the game');
+        return null;
+    }
+
+    const { data: updatedGame, error: updatedGameError } = await supabaseServer
+        .from('games')
+        .update({ has_started: true })
+        .eq('id', gameId)
+        .select()
+        .single();
+
+    if (updatedGameError || !updatedGame) {
+        console.error('Error starting game:', updatedGameError);
         return null;
     }
 

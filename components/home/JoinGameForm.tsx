@@ -24,6 +24,7 @@ export const JoinGameForm = ({
                 value={name}
                 onChange={e => setName(e.target.value)}
                 className="border-b outline-none py-1"
+                maxLength={16}
             />
 
             <input
@@ -31,6 +32,7 @@ export const JoinGameForm = ({
                 value={code}
                 onChange={e => setCode(e.target.value.toUpperCase())}
                 className="border-b outline-none py-1"
+                maxLength={6}
             />
 
             {error && (

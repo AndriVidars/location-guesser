@@ -33,6 +33,7 @@ export const CreateGameForm = ({
                 value={name}
                 onChange={e => setName(e.target.value)}
                 className="border-b outline-none py-1"
+                maxLength={16}
             />
 
             <div className="space-y-4">
