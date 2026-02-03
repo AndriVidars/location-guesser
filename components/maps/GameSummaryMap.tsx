@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, memo } from 'react';
 import { Map as MapLibre, LngLatBounds } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Map, { NavigationControl, Marker, Source, Layer, MapRef } from 'react-map-gl/maplibre';
+import { MAP_STYLE } from '@/lib/map-config';
 
 interface GameSummaryMapProps {
     rounds: {
@@ -14,7 +15,7 @@ interface GameSummaryMapProps {
     }[];
 }
 
-export default function GameSummaryMap({ rounds }: GameSummaryMapProps) {
+function GameSummaryMap({ rounds }: GameSummaryMapProps) {
     const mapRef = useRef<MapRef>(null);
 
     // Calculate bounds to fit all points
@@ -68,26 +69,7 @@ export default function GameSummaryMap({ rounds }: GameSummaryMapProps) {
                     zoom: 1
                 }}
                 attributionControl={false}
-                mapStyle={{
-                    version: 8,
-                    sources: {
-                        'carto-voyager': {
-                            type: 'raster',
-                            tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
-                            tileSize: 256,
-                            attribution: '© CARTO'
-                        }
-                    },
-                    layers: [
-                        {
-                            id: 'carto-voyager',
-                            type: 'raster',
-                            source: 'carto-voyager',
-                            minzoom: 0,
-                            maxzoom: 20
-                        }
-                    ]
-                }}
+                mapStyle={MAP_STYLE}
             >
                 {/* Lines */}
                 <Source id="lines" type="geojson" data={linesGeoJSON as any}>
@@ -137,3 +119,5 @@ export default function GameSummaryMap({ rounds }: GameSummaryMapProps) {
         </div>
     );
 }
+
+export default memo(GameSummaryMap);

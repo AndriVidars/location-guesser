@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, memo } from 'react';
 import { Map as MapLibre, LngLatBounds } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Map, { NavigationControl, Marker, Source, Layer, MapRef } from 'react-map-gl/maplibre';
+import { MAP_STYLE } from '@/lib/map-config';
 
 interface ResultMapProps {
     correctLocation: { lat: number; lng: number };
@@ -17,7 +18,7 @@ interface ResultMapProps {
     }[];
 }
 
-export default function ResultMap({ correctLocation, guesses }: ResultMapProps) {
+function ResultMap({ correctLocation, guesses }: ResultMapProps) {
     const mapRef = useRef<MapRef>(null);
 
     // Calculate bounds to fit all points
@@ -75,26 +76,7 @@ export default function ResultMap({ correctLocation, guesses }: ResultMapProps) 
                     zoom: 1
                 }}
                 attributionControl={false}
-                mapStyle={{
-                    version: 8,
-                    sources: {
-                        'carto-voyager': {
-                            type: 'raster',
-                            tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
-                            tileSize: 256,
-                            attribution: '© CARTO'
-                        }
-                    },
-                    layers: [
-                        {
-                            id: 'carto-voyager',
-                            type: 'raster',
-                            source: 'carto-voyager',
-                            minzoom: 0,
-                            maxzoom: 20
-                        }
-                    ]
-                }}
+                mapStyle={MAP_STYLE}
             >
                 {/* Lines */}
                 <Source id="lines" type="geojson" data={linesGeoJSON as any}>
@@ -143,3 +125,5 @@ export default function ResultMap({ correctLocation, guesses }: ResultMapProps) 
         </div>
     );
 }
+
+export default memo(ResultMap);
